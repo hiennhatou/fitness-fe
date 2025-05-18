@@ -1,16 +1,50 @@
-import { Eye } from "../../components/icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router";
+import axios from "axios";
+
 import Template from "./Template";
+import { Eye } from "../../components/icons";
 import imageCover from "../../assets/login-cover.png";
-import { Link } from "react-router";
+import { useUserState } from "../globalState";
+import { loadUser } from "../../utils/functions/loadUser";
 
 function RightComponent() {
+  const user = useUserState(state => state.user);
+  const isLoaded = useUserState(state => state.isLoaded);
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    setTimeout(() => {
+      if (window.HSStaticMethods)
+        window.HSStaticMethods.autoInit(['toggle-password'])
+    })
+  }, [])
+
+  useEffect(() => {
+    if (user) navigate("/");
+  }, [user, isLoaded, navigate])
 
   const onLogin = () => {
-    console.log(username);
-    console.log(password);
+    if (username && password) {
+      axios
+        .post(`${import.meta.env.VITE_API_HOST}/login`, { username, password }, { headers: { "Content-Type": "application/json" } })
+        .then((data) => {
+          if (data.status === 200 && data.data.token) return data.data as { token: string };
+          throw new Error("Lỗi hệ thống");
+        })
+        .then((data) => {
+          localStorage.setItem("token", data.token);
+          return loadUser(true);
+        })
+        .then(() => {
+          navigate("/")
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
   };
 
   return (

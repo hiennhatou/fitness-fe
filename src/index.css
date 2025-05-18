@@ -3,5 +3,65 @@
 @source "../node_modules/preline/dist/*.js";
 
 @theme {
-    --font-sans: "Open Sans", sans-serif;
+  --font-sans: "Open Sans", sans-serif;
+  --animate-open-cover: opencover ease 0.5s forwards;
+}
+
+@keyframes opencover {
+  0% {
+    height: 0;
+  }
+  100% {
+    height: calc(var(--spacing) * 96);
+  }
+}
+
+@keyframes openCard {
+  0% {
+    opacity: 100%;
+  }
+  25% {
+    opacity: 0%;
+  }
+  50% {
+    grid-column: 1 / -1;
+    height: auto;
+  }
+  100% {
+    grid-column: 1 / -1;
+    opacity: 100%;
+    height: auto;
+  }
+}
+
+@keyframes closeCard {
+  0% {
+    grid-column: 1 / -1;
+    opacity: 100%;
+    height: auto;
+  }
+  40% {
+    opacity: 0%;
+  }
+  75% {
+    grid-column: span 1 / span 1;
+  }
+  100% {
+    opacity: 100%;
+    grid-column: span 1 / span 1;
+  }
+}
+
+@utility exerciseopen {
+  animation: openCard 1s ease-in-out forwards;
+}
+
+@utility exerciseclose {
+  animation: closeCard 1s ease-in-out forwards;
+}
+
+@utility gradientblur {
+  -webkit-mask-image: linear-gradient(to bottom, black 10%, transparent 80%);
+  mask-image: linear-gradient(to bottom, black 10%, transparent 80%);
+  @apply backdrop-blur-xs;
 }
