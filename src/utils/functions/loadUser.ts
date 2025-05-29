@@ -1,22 +1,21 @@
-import axios from "axios";
 import { useUserState } from "../../app/globalState";
+import { secureApi } from "../http";
 
 export async function loadUser(isLogin: boolean = false) {
   const isLoadedUser = useUserState.getState().isLoaded;
   const user = useUserState.getState().user;
 
-  const token = localStorage.getItem("token");
-  
-  if (token && (isLogin || !(isLoadedUser || user)))
+  if (isLogin || !(isLoadedUser || user)) {
     try {
-      const data = await axios.get(`${import.meta.env.VITE_API_HOST}/secure/me`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await secureApi.get(`/me`);
       if (data.status === 200) {
         useUserState.setState({ user: data.data, isLoaded: true });
-        return;
+        return data.data;
       }
     } catch (err: unknown) {
       console.log(err);
     }
 
-    useUserState.setState({user: null, isLoaded: true});
+    useUserState.setState({ user: null, isLoaded: true });
+  }
 }

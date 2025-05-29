@@ -4,10 +4,10 @@ import type { ISession } from "../utils/interfaces";
 import anonymousAvatar from "../assets/anonymous-avatar.jpg";
 import sessionCover from "../assets/session-cover.webp";
 
-export default function SessionCard({
+export function SessionCard({
   session,
 }: {
-  session: SessionCardType;
+  session: ISession;
 }) {
   const navigate = useNavigate();
 
@@ -37,7 +37,7 @@ export default function SessionCard({
               <span className="font-semibold">{session.owner?.firstName || "Anomymous Trainer"}</span>{" "}
               {session.owner ? <span className="text-gray-100 text-sm">&#9210; {session.owner.username}</span> : ""}
             </div>
-            <span className="text-gray-100 text-sm leading-3.5">{dayjs(session.createdOn, "DD:MM:YYYY").utcOffset(7).format("DD.MM.YYYY")}</span>
+            <span className="text-gray-100 text-sm leading-3.5">{dayjs(session.createdOn).utcOffset(7).format("HH:mm  DD.MM.YYYY")}</span>
           </div>
         </div>
         <h1 className="text-xl font-semibold my-1 overflow-ellipsis overflow-hidden text-nowrap">{session.name}</h1>
@@ -46,5 +46,3 @@ export default function SessionCard({
     </div>
   );
 }
-
-export type SessionCardType = Required<Pick<ISession, "name" | "id" | "createdOn" | "coverImage">> & Partial<Pick<ISession, "owner" | "description">>;

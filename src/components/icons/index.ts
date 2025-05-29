@@ -1,6 +1,16 @@
 export { default as Eye } from "./Eye";
 export { default as Burger } from "./Burger";
-export { default as Close } from "./Close";
+export { default as Collapse } from "./Collapse";
 export { default as ProfileIcon } from "./Profile";
 export { default as Dumbbell } from "./Dumbbell";
 export { default as ExitIcon } from "./Exit";
+export { Trash } from "./Trash";
+export { Plus } from "./Plus";
+export { SearchIcon } from "./Search";
+export { CheckedIcon } from "./Checked";
+export { QuestionIcon } from "./Question";
+export { CalendarIcon } from "./Calendar";
+export { UploadIcon } from "./Upload";
+export { RefreshIcon } from "./Refresh";
+export { UserPenIcon } from "./UserPen";
+export { ActivityIcon } from "./Activity";

@@ -1,5 +1,5 @@
 import { Outlet } from "react-router";
-import Measurement from "./Measurement";
+import { Measurement } from "./Measurement";
 import Actions from "./Actions";
 
 export function TwoColumnLayout() {

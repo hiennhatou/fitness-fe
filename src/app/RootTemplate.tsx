@@ -1,16 +1,55 @@
-import { Fragment, useEffect } from "react";
+import { Fragment, useEffect, useMemo, type JSX } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
-import { useShallow } from "zustand/shallow";
 
-import { Burger, Close, Dumbbell, ExitIcon, ProfileIcon } from "../components/icons";
+import { ActivityIcon, Burger, Collapse, Dumbbell, ExitIcon, ProfileIcon, UserPenIcon } from "../components/icons";
 import { useUserState } from "./globalState";
 import anonymousAvatar from "../assets/anonymous-avatar.jpg";
+import { UserRoleEnum } from "../utils/enums";
+import type { IUser } from "../utils/interfaces";
 
-export default function RootTemplate() {
-  const user = useUserState(useShallow((state) => ({ user: state.user, isLoaded: state.isLoaded })));
+function getPersonalizedMenu(user?: Omit<IUser, "password"> | null) {
+  const menu: { label: string; to: string; Icon: JSX.Element }[] = [];
+  switch (user?.role) {
+    case UserRoleEnum.ROLE_TRAINER:
+    case UserRoleEnum.ROLE_TRAINEE:
+      menu.push(
+        {
+          label: "Hồ sơ cá nhân",
+          to: `/profile?id=${user.id}`,
+          Icon: <ProfileIcon className="size-4" />,
+        },
+        {
+          label: "Thông tin cá nhân",
+          to: "/user-inform",
+          Icon: <UserPenIcon className="size-4" />,
+        },
+        {
+          label: "Các chỉ số",
+          to: "/user-inform/metrics",
+          Icon: <ActivityIcon className="size-4" />,
+        },
+        {
+          label: "Các bài tập từ PT",
+          to: "#",
+          Icon: <Dumbbell className="size-4" />,
+        }
+      );
+      break;
+    default:
+      break;
+  }
+
+  return menu;
+}
+
+export function RootTemplate() {
+  const user = useUserState((state) => state.user);
+  const isLoaded = useUserState((state) => state.isLoaded);
   const setUser = useUserState((state) => state.setUser);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const personalizedMenu = useMemo(() => getPersonalizedMenu(user), [user]);
 
   useEffect(() => {
     setTimeout(() => {
@@ -19,8 +58,8 @@ export default function RootTemplate() {
   }, [location, user]);
 
   useEffect(() => {
-    if (!user.user && user.isLoaded) navigate("/login");
-  }, [user, navigate]);
+    if (!user && isLoaded) navigate("/login");
+  }, [user, navigate, isLoaded]);
 
   const onLogout = () => {
     localStorage.removeItem("token");
@@ -29,7 +68,7 @@ export default function RootTemplate() {
 
   return (
     <Fragment>
-      {!user.isLoaded && (
+      {!isLoaded && (
         <div className="absolute z-50 bg-white top-0 bottom-0 right-0 left-0 flex items-center justify-center">
           <div
             className="animate-spin inline-block size-20 border-3 border-current border-t-transparent text-blue-600 rounded-full dark:text-blue-500"
@@ -39,8 +78,8 @@ export default function RootTemplate() {
           </div>
         </div>
       )}
-      <div className="min-h-dvh">
-        <header className="relative flex flex-wrap sm:justify-start sm:flex-nowrap w-full bg-white text-sm py-3 shadow-md">
+      <div className="min-h-dvh grid grid-rows-[min-content_100%]">
+        <header className="sticky top-0 flex flex-wrap sm:justify-start sm:flex-nowrap w-full bg-white text-sm py-3 shadow-md z-40">
           <nav className="max-w-[85rem] w-full mx-auto px-4 sm:flex sm:items-center sm:justify-between">
             <div className="flex items-center justify-between">
               <Link
@@ -59,7 +98,7 @@ export default function RootTemplate() {
                   aria-label="Đóng/mở menu"
                   data-hs-collapse="#hs-navbar">
                   <Burger />
-                  <Close />
+                  <Collapse />
                   <span className="sr-only">Đóng/mở menu</span>
                 </button>
               </div>
@@ -69,16 +108,10 @@ export default function RootTemplate() {
               className="hidden hs-collapse overflow-hidden transition-all duration-300 basis-full grow sm:block"
               aria-labelledby="hs-navbar-collapse">
               <div className="flex flex-col gap-5 mt-5 sm:flex-row sm:items-center sm:justify-end sm:mt-0 sm:ps-5 [&>.active]:text-blue-400 [&>:not(.active)]:focus:text-gray-400 [&>:not(.active)]:hover:text-gray-400">
-                <Link className="font-medium text-gray-600 focus:outline-hidden active" to="#">
-                  Phiên tập mẫu
+                <Link className="font-medium text-gray-600 focus:outline-hidden" to="/sessions">
+                  Bài tập tổng hợp
                 </Link>
-                <Link className="font-medium text-gray-600 focus:outline-hidden" to="#">
-                  Các bài tập
-                </Link>
-                <Link className="font-medium text-gray-600 focus:outline-hidden" to="#">
-                  Các chỉ số
-                </Link>
-                {user.user && (
+                {user && (
                   <div className="hs-dropdown relative inline-block [--strategy:static] sm:[--strategy:fixed]">
                     <button
                       id="hs-dropdown-default"
@@ -87,8 +120,8 @@ export default function RootTemplate() {
                       aria-haspopup="menu"
                       aria-expanded="false"
                       aria-label="Dropdown">
-                      <img src={user.user?.avatar || anonymousAvatar} alt="" className="size-8 rounded-full" />
-                      <span className="text-sm">{user.user?.firstName}</span>
+                      <img src={user.avatar || anonymousAvatar} alt="" className="size-8 rounded-full" />
+                      <span className="text-sm">{user.firstName}</span>
                     </button>
 
                     <div
@@ -97,18 +130,15 @@ export default function RootTemplate() {
                       aria-orientation="vertical"
                       aria-labelledby="hs-dropdown-default">
                       <div className="p-1 space-y-0.5">
-                        <Link
-                          className="flex items-center py-2 px-3 rounded-lg text-sm text-gray-800 hover:bg-gray-100 focus:outline-hidden focus:bg-gray-100 gap-x-2"
-                          to="#">
-                          <ProfileIcon className="size-4" />
-                          Thông tin cá nhân
-                        </Link>
-                        <Link
-                          className="flex items-center py-2 px-3 rounded-lg text-sm text-gray-800 hover:bg-gray-100 focus:outline-hidden focus:bg-gray-100 gap-x-2"
-                          to="#">
-                          <Dumbbell className="size-4" />
-                          Các bài tập từ PT
-                        </Link>
+                        {personalizedMenu.map((item, idx) => (
+                          <Link
+                            key={idx}
+                            className="flex items-center py-2 px-3 rounded-lg text-sm text-gray-800 hover:bg-gray-100 focus:outline-hidden focus:bg-gray-100 gap-x-2"
+                            to={item.to}>
+                            {item.Icon}
+                            {item.label}
+                          </Link>
+                        ))}
                         <a
                           onClick={onLogout}
                           className="!cursor-pointer flex items-center py-2 px-3 rounded-lg text-sm text-gray-800 hover:bg-gray-100 focus:outline-hidden focus:bg-gray-100 gap-x-2">
@@ -123,7 +153,7 @@ export default function RootTemplate() {
             </div>
           </nav>
         </header>
-        <div className="mx-auto max-w-7xl h-full">
+        <div className="mx-auto max-w-7xl h-full w-full">
           <Outlet />
         </div>
       </div>
