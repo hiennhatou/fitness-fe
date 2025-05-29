@@ -2,7 +2,7 @@ import { createBrowserRouter, data, type LoaderFunctionArgs } from "react-router
 
 import { normalApi, secureApi } from "../utils/http";
 import type { IExercise, IExerciseLog, ISessionLog } from "../utils/interfaces";
-import { TwoColumnLayout } from "../components/TwoColumnLayout";
+import { TwoColumnLayout } from "../components";
 import { RootTemplate } from "./RootTemplate";
 import { ErrorBoundary } from "./ErrorBoundary";
 import {
