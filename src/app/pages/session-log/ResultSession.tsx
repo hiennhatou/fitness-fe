@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
+import { MathJax } from "better-react-mathjax";
+import { HSOverlay } from "preline";
+import dayjs from "dayjs";
+
 import { calBurnedCalories } from "../../../utils/functions/calBurnedCalories";
 import type { IPrimaryMeasurementLog, ISessionLog } from "../../../utils/interfaces";
 import { useUserState } from "../../globalState";
 import { secureApi } from "../../../utils/http";
-import dayjs from "dayjs";
-import { HSOverlay } from "preline";
 import { QuestionIcon } from "../../../components/icons";
-import { MathJax } from "better-react-mathjax";
 
 export function ResultSession({ sessionLog }: { sessionLog: ISessionLog }) {
   const user = useUserState((state) => state.user);
@@ -75,8 +76,8 @@ export function ResultSession({ sessionLog }: { sessionLog: ISessionLog }) {
                     primaryMeasurementLog.weight,
                     -dayjs(user.birthdate).diff(dayjs(), "y"),
                     user.gender
-                  ) * 1000
-                )} calo`
+                  )
+                )} kcal`
               : "Hãy cập thông tin cá nhân: giới tính, cân nặng, ngày sinh để tính toán lượng calo tiêu thụ"}
           </p>
         </div>

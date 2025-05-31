@@ -1,37 +1,47 @@
 import { Fragment, useEffect, useMemo, type JSX } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
 
-import { ActivityIcon, Burger, Collapse, Dumbbell, ExitIcon, ProfileIcon, UserPenIcon } from "../components/icons";
+import { ActivityIcon, Burger, Collapse, ComunityIcon, Dumbbell, ExitIcon, HeartHandShakeIcon, ProfileIcon, UserPenIcon } from "../components/icons";
 import { useUserState } from "./globalState";
 import anonymousAvatar from "../assets/anonymous-avatar.jpg";
 import { UserRoleEnum } from "../utils/enums";
 import type { IUser } from "../utils/interfaces";
 
 function getPersonalizedMenu(user?: Omit<IUser, "password"> | null) {
-  const menu: { label: string; to: string; Icon: JSX.Element }[] = [];
+  const menu: { label: string; to: string; Icon: JSX.Element }[] = [
+    {
+      label: "Hồ sơ cá nhân",
+      to: `/profile?id=${user?.id}`,
+      Icon: <ProfileIcon className="size-4" />,
+    },
+    {
+      label: "Thông tin cá nhân",
+      to: "/user-inform",
+      Icon: <UserPenIcon className="size-4" />,
+    },
+    {
+      label: "Chỉ số sức khỏe",
+      to: "/user-inform/metrics",
+      Icon: <ActivityIcon className="size-4" />,
+    },
+    {
+      label: "Tư vấn từ PT",
+      to: "/recommend-session",
+      Icon: <HeartHandShakeIcon className="size-4" />,
+    },
+  ];
   switch (user?.role) {
     case UserRoleEnum.ROLE_TRAINER:
-    case UserRoleEnum.ROLE_TRAINEE:
       menu.push(
         {
-          label: "Hồ sơ cá nhân",
-          to: `/profile?id=${user.id}`,
-          Icon: <ProfileIcon className="size-4" />,
-        },
-        {
-          label: "Thông tin cá nhân",
-          to: "/user-inform",
-          Icon: <UserPenIcon className="size-4" />,
-        },
-        {
-          label: "Các chỉ số",
-          to: "/user-inform/metrics",
-          Icon: <ActivityIcon className="size-4" />,
-        },
-        {
-          label: "Các bài tập từ PT",
-          to: "#",
+          label: "Quản lý bài tập tổng hợp",
+          to: "/manage-sessions",
           Icon: <Dumbbell className="size-4" />,
+        },
+        {
+          label: "Quản lý học viên",
+          to: "/trainees",
+          Icon: <ComunityIcon className="size-4" />,
         }
       );
       break;
@@ -110,6 +120,9 @@ export function RootTemplate() {
               <div className="flex flex-col gap-5 mt-5 sm:flex-row sm:items-center sm:justify-end sm:mt-0 sm:ps-5 [&>.active]:text-blue-400 [&>:not(.active)]:focus:text-gray-400 [&>:not(.active)]:hover:text-gray-400">
                 <Link className="font-medium text-gray-600 focus:outline-hidden" to="/sessions">
                   Bài tập tổng hợp
+                </Link>
+                <Link className="font-medium text-gray-600 focus:outline-hidden" to="/exercises">
+                  Bài tập đơn
                 </Link>
                 {user && (
                   <div className="hs-dropdown relative inline-block [--strategy:static] sm:[--strategy:fixed]">

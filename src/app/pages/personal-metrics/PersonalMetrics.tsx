@@ -8,7 +8,7 @@ const WaterLogTab = lazy(() => import("./WaterLogTab"));
 const tabs = [
   {id: "height-weight", title: "Chiều cao - cân nặng", Component: HeightWeightTab},
   {id: "step-log", title: "Số bước đi", Component: StepLogTab},
-  {id: "heart-beat", title: "Nhịp tim", Component: HeartBeatTab},
+  // {id: "heart-beat", title: "Nhịp tim", Component: HeartBeatTab},
   {id: "water-log", title: "Lượng nước uống", Component: WaterLogTab},
 ]
 

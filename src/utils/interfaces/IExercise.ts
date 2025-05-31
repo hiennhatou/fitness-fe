@@ -6,4 +6,5 @@ export interface IExercise {
     description?: string;
     owner?: IUser;
     image?: string;
+    sessionExerciseId?: number;
 }

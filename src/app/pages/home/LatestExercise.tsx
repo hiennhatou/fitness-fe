@@ -7,7 +7,7 @@ export default function LatestExercises() {
   const [exercises, setExercise] = useState<IExercise[]>([]);
 
   useEffect(() => {
-    normalApi.get(`/exercises`).then((data) => {
+    normalApi.get(`/exercises?page=1`).then((data) => {
       if (data.status === 200) setExercise(data.data);
     });
   }, []);

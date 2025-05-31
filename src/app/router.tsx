@@ -1,7 +1,7 @@
 import { createBrowserRouter, data, type LoaderFunctionArgs } from "react-router";
 
 import { normalApi, secureApi } from "../utils/http";
-import type { IExercise, IExerciseLog, ISessionLog } from "../utils/interfaces";
+import type { IExercise, IExerciseLog, ISessionLog, IRegisterPT, ISession } from "../utils/interfaces";
 import { TwoColumnLayout } from "../components";
 import { RootTemplate } from "./RootTemplate";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -19,7 +19,14 @@ import {
   Profile,
   ScheduleSession,
   AddSession,
+  Exercises,
+  ManageSession,
+  ModifySession,
 } from "./pages";
+import { ManageTrainees } from "./pages/manage-trainees";
+import { TraineeDetail } from "./pages/trainee-detail";
+import { RecommendSession } from "./pages/recommend-session";
+import { useUserState } from "./globalState";
 
 const router = createBrowserRouter([
   {
@@ -46,7 +53,12 @@ const router = createBrowserRouter([
                     Component: SessionDetail,
                     loader: loadSessionDetail,
                   },
+                  { path: ":id/edit", Component: ModifySession, loader: modifySessionLoader },
                 ],
+              },
+              {
+                path: "exercises",
+                Component: Exercises,
               },
               {
                 path: "session-log",
@@ -55,6 +67,26 @@ const router = createBrowserRouter([
               {
                 path: "user-inform",
                 Component: UserInform,
+              },
+              {
+                path: "trainees",
+                children: [
+                  { index: true, Component: ManageTrainees },
+                  {
+                    path: ":id",
+                    Component: TraineeDetail,
+                    loader: traineeDetailLoader,
+                  },
+                ],
+              },
+              {
+                path: "recommend-session",
+                Component: RecommendSession,
+                loader: recommendSessionLoader,
+              },
+              {
+                path: "manage-sessions",
+                Component: ManageSession,
               },
             ],
           },
@@ -191,6 +223,47 @@ async function profileLoader({ request }: LoaderFunctionArgs) {
       console.log(err);
     }
   throw data(null, { status: 404 });
+}
+
+async function traineeDetailLoader({ params }: LoaderFunctionArgs) {
+  if (!params.id) return {};
+  try {
+    const id = parseInt(params.id);
+    const result = await secureApi.get(`/register-pt/${id}`);
+    if (result.status === 200) {
+      return result.data as IRegisterPT;
+    }
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+async function recommendSessionLoader() {
+  try {
+    const result = await secureApi.get("/me/recommend-session");
+    if (result.status === 200) {
+      return { recommendSession: result.data };
+    }
+  } catch (error) {
+    console.log(error);
+  }
+  return {};
+}
+
+async function modifySessionLoader({ params }: LoaderFunctionArgs) {
+  if (!params.id) return {};
+  try {
+    const id = parseInt(params.id);
+    const result = await Promise.allSettled([
+      normalApi.get<ISession>(`/sessions/${id}`),
+      normalApi.get<IExercise[]>(`/sessions/${id}/exercises`)
+    ]);
+    if (result[0].status === "fulfilled" && result[0].value.status === 200 && result[1].status === "fulfilled" && result[1].value.status === 200) {
+      return { session: result[0].value.data, exercises: result[1].value.data };
+    }
+  } catch (error) {
+    throw data(null, { status: 404 });
+  }
 }
 
 export default router;

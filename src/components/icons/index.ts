@@ -14,3 +14,5 @@ export { UploadIcon } from "./Upload";
 export { RefreshIcon } from "./Refresh";
 export { UserPenIcon } from "./UserPen";
 export { ActivityIcon } from "./Activity";
+export { HeartHandShakeIcon } from "./HeartHandShake";
+export { ComunityIcon } from "./Comunity";

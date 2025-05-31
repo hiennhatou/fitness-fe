@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { Bounce, ToastContainer, toast } from "react-toastify";
 import { HSOverlay, HSTooltip, type ICollectionItem } from "preline";
 import { useNavigate } from "react-router";
@@ -9,26 +9,33 @@ import sessionCover from "../../../assets/session-cover.webp";
 import { Plus } from "../../../components/icons";
 import type { IExercise, IExerciseLog, ISession } from "../../../utils/interfaces";
 import { ExerciseCardNoExpand, AddExerciseModal, DetailExerciseModal } from "../../../components";
-import { AddNewExerciseModal } from "./AddNewExerciseModal";
 import { HttpError } from "../../../utils/errors";
 import { UserRoleEnum } from "../../../utils/enums";
+import { AddNewExerciseModal } from "./AddNewExerciseModal";
+import { useLoaderData } from "react-router";
 
-export function AddSession() {
+export function ModifySession() {
+  const { session, exercises: existedExercises } = useLoaderData() as {
+    session: ISession;
+    exercises: (IExercise & Required<Pick<IExercise, "sessionExerciseId">>)[];
+  };
   const user = useUserState((state) => state.user);
   const isLoaded = useUserState((state) => state.isLoaded);
   const navigate = useNavigate();
-  const [name, setName] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
-  const [coverImg, setCoverImg] = useState<File | string | null>(null);
+  const [name, setName] = useState<string>(session.name);
+  const [description, setDescription] = useState<string>(session.description);
+  const [coverImg, setCoverImg] = useState<File | string | null>(session.coverImage || null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [exercises, setExercises] = useState<IExercise[]>([]);
+  const [addedExercises, setAddedExercises] = useState<IExercise[]>([]);
+  const [deletedExercises, setDeletedExercises] = useState<IExercise[]>([]);
   const [currentExercise, setCurrentExercise] = useState<IExercise | undefined>();
 
   const imgInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (isLoaded && (!user || user.role !== UserRoleEnum.ROLE_TRAINER)) throw new HttpError(404, "Not found");
-  }, [user, isLoaded]);
+    if (isLoaded && (!user || user.role !== UserRoleEnum.ROLE_TRAINER || !session.owner || session.owner.id !== user.id))
+      throw new HttpError(404, "Not found");
+  }, [user, isLoaded, session]);
 
   useEffect(() => {
     function clickOutside(e: MouseEvent) {
@@ -70,13 +77,22 @@ export function AddSession() {
     return sessionCover;
   };
 
+  const exercises = useMemo(
+    () => [...addedExercises, ...existedExercises.filter((e) => deletedExercises.findIndex((d) => d.id === e.id) === -1)],
+    [addedExercises, existedExercises, deletedExercises]
+  );
+
   const handleDeleteExercise = (exercise: IExercise | undefined) => {
     if (!exercise) return;
-    setExercises(exercises.filter((e) => e !== exercise));
+    if (exercise.sessionExerciseId) {
+      setDeletedExercises([...deletedExercises, exercise]);
+    } else {
+      setAddedExercises(addedExercises.filter((e) => e !== exercise));
+    }
   };
 
   const handleAddExercises = (newExercises: IExercise[]) => {
-    setExercises([...exercises, ...newExercises]);
+    setAddedExercises([...addedExercises, ...newExercises]);
   };
 
   const onSubmit = async () => {
@@ -90,18 +106,16 @@ export function AddSession() {
         formData.append("img", coverImg);
       }
 
-      const sessionResponse = await secureApi.post<ISession>("/sessions", formData);
-      console.log(sessionResponse.data);
+      const sessionResponse = await secureApi.patch<ISession>(`/sessions/${session.id}`, formData);
 
-      await Promise.allSettled(
-        exercises.map((exercise) =>
-          secureApi.post<IExerciseLog>(`/sessions/${sessionResponse.data.id}/exercises?exerId=${exercise.id}`)
-        )
-      );
+      await Promise.allSettled([
+        ...addedExercises.map((exercise) => secureApi.post<IExerciseLog>(`/sessions/${sessionResponse.data.id}/exercises?exerId=${exercise.id}`)),
+        ...deletedExercises.map((exercise) => secureApi.delete(`/sessions/${sessionResponse.data.id}/exercises/${exercise.id}`))
+      ]);
 
       navigate(`/sessions/${sessionResponse.data.id}`);
 
-      toast.success("Thêm bài tập thành công", {
+      toast.success("Chỉnh sửa bài tập thành công", {
         position: "bottom-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -131,12 +145,12 @@ export function AddSession() {
   };
 
   return (
-    <div className="mx-auto my-8 max-w-2xl">
+    <div className="col-span-full md:col-span-2">
       <div className="absolute">
         <ToastContainer />
       </div>
       <div className="text-center">
-        <h2 className="text-xl text-gray-800 font-bold sm:text-3xl">Tạo bài tập tổng hợp</h2>
+        <h2 className="text-xl text-gray-800 font-bold sm:text-3xl">Chỉnh sửa bài tập tổng hợp</h2>
       </div>
 
       <div className="rounded-xl my-4 flex flex-col gap-4">
@@ -163,7 +177,7 @@ export function AddSession() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             className="py-3 px-4 block w-full border border-gray-300 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none"
-            rows={3}
+            rows={7}
             placeholder="Nhập mô tả buổi tập"></textarea>
         </div>
 
@@ -174,7 +188,7 @@ export function AddSession() {
           <input type="file" id="coverImg" ref={imgInputRef} onChange={onFileChange} className="hidden" accept="image/*" />
           <div
             onClick={onChooseImage}
-            className="relative h-48 rounded-lg bg-gray-200 border border-gray-50 overflow-hidden hover:[&>span]:bg-[rgba(122,122,122,0.5)]">
+            className="relative h-72 rounded-lg bg-gray-200 border border-gray-50 overflow-hidden hover:[&>span]:bg-[rgba(122,122,122,0.5)]">
             <span className="absolute bottom-0 left-0 right-0 bg-[rgba(87,87,87,0.3)] text-white text-xs flex items-center justify-center pb-1 z-20">
               Chọn ảnh bìa
             </span>
@@ -260,7 +274,7 @@ export function AddSession() {
         onDelete={() => handleDeleteExercise(currentExercise)}
       />
       <AddExerciseModal addExistedExercise={handleAddExercises} existedExercise={exercises} />
-      <AddNewExerciseModal onDone={(exercise) => setExercises([...exercises, exercise])} />
+      <AddNewExerciseModal onDone={(exercise) => setAddedExercises([...addedExercises, exercise])} />
     </div>
   );
 }

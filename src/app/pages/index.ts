@@ -9,3 +9,6 @@ export * from "./schedule-session";
 export * from "./add-session";
 export * from "./auth";
 export * from "./session-log-history";
+export * from "./exercises";
+export * from "./manage-sessions";
+export * from "./modify-session";

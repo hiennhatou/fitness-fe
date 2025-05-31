@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { HSOverlay, type ICollectionItem } from "preline";
 import { CheckedIcon, SearchIcon } from "../components/icons";
 import type { IExercise } from "../utils/interfaces";
 import exerciseCover from "../assets/exercise-cover.jpg";
-import { HSOverlay, type ICollectionItem } from "preline";
 import { normalApi } from "../utils/http";
 
 export function AddExerciseModal({
@@ -14,12 +14,13 @@ export function AddExerciseModal({
 }) {
   const [selectedExercises, setSelectedExercises] = useState<IExercise[]>([]);
   const [searchedExercises, setSearchedExercises] = useState<IExercise[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const onSearch = async () => {
     setIsLoading(true);
     try {
-      const data = await normalApi.get(`/exercises`);
+      const data = await normalApi.get(`/exercises?s=${encodeURIComponent(searchQuery)}`);
       if (data.status === 200)
         setSearchedExercises((data.data as IExercise[]).filter((exercise) => !existedExercise.find((value) => value.id === exercise.id)));
     } catch (err) {
@@ -28,6 +29,12 @@ export function AddExerciseModal({
     setIsLoading(false);
   };
 
+  const getAllExercises = useCallback(async () => {
+    const data = await normalApi.get(`/exercises`);
+    if (data.status === 200)
+      setSearchedExercises((data.data as IExercise[]).filter((exercise) => !existedExercise.find((value) => value.id === exercise.id)));
+  }, [existedExercise]);
+
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -35,20 +42,21 @@ export function AddExerciseModal({
   }, []);
 
   useEffect(() => {
-    setTimeout(() => {
-      if (ref.current) {
-        const { element } = HSOverlay.getInstance(ref.current, true) as ICollectionItem<HSOverlay>;
-        element.on("close", () => {
-          setSelectedExercises([]);
-          setSearchedExercises([]);
-        });
-        element.on("open", () => {
-          setSelectedExercises([]);
-          setSearchedExercises([]);
-        });
-      }
-    });
-  }, [existedExercise]);
+    if (ref.current) {
+      const { element } = HSOverlay.getInstance(ref.current, true) as ICollectionItem<HSOverlay>;
+      element.on("close", () => {
+        setSelectedExercises([]);
+        setSearchedExercises([]);
+        setSearchQuery("");
+      });
+      element.on("open", () => {
+        setSelectedExercises([]);
+        setSearchedExercises([]);
+        setSearchQuery("");
+        getAllExercises();
+      });
+    }
+  }, [getAllExercises]);
 
   return (
     <div
@@ -63,7 +71,13 @@ export function AddExerciseModal({
           <div className="flex gap-3 justify-between items-center px-4 py-2.5 border-b border-gray-200">
             <div className="flex flex-row border-gray-400 border px-2 py-1.5 rounded-full basis-full">
               <div className="basis-full">
-                <input className="w-full outline-none text-sm text-gray-800 placeholder:text-gray-300" placeholder="Tìm bài tập..." type="text" />
+                <input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full outline-none text-sm text-gray-800 placeholder:text-gray-300"
+                  placeholder="Tìm bài tập..."
+                  type="text"
+                />
               </div>
               <div className="w-[1px] bg-gray-300 mx-2"></div>
               <button onClick={onSearch} className="size-6">
@@ -89,11 +103,7 @@ export function AddExerciseModal({
                       onClick={() => {
                         if (selectedExercises.findIndex((value) => exercise.id === value.id) >= 0)
                           setSelectedExercises(selectedExercises.filter((value) => value.id != exercise.id));
-                        else
-                          setSelectedExercises([
-                            ...selectedExercises,
-                            exercise,
-                          ]);
+                        else setSelectedExercises([...selectedExercises, exercise]);
                       }}
                       className="w-full cursor-pointer rounded-xl relative h-72 overflow-hidden border-[0.1rem] border-gray-400 flex flex-col px-2 py-3 z-auto">
                       <h1 className="text-xl basis-[fit-content] font-bold overflow-ellipsis text-nowrap text-blue-400">{exercise.name}</h1>

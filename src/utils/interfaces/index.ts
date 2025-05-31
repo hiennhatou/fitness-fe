@@ -9,3 +9,7 @@ export * from "./IStepLog";
 export * from "./IWaterLog";
 export * from "./IHeartRate";
 export * from "./IScheduleSession";
+export * from "./ITrainee";
+export * from "./ITrainer";
+export * from "./IRecommendSessionTrainer";
+export * from "./IRegisterPT";
